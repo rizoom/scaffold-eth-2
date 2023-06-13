@@ -31,6 +31,24 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
     autoMine: true,
   });
 
+  await deploy("MetaMultiSigWallet", {
+    from: deployer,
+    // Contract constructor arguments
+    args: [
+      31337,
+      [
+        "0x62C3bc375cBAa96C0C462934e34684834344B593",
+        "0xE875702bD4c482F9Fd45e24D370A6922681a32aF",
+        "0x97843608a00e2bbc75ab0C1911387E002565DEDE", // buidlguidl.eth
+      ],
+      1,
+    ],
+    log: true,
+    // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
+    // automatically mining the contract deployment transaction. There is no effect on live networks.
+    autoMine: true,
+  });
+
   // Get the deployed contract
   // const yourContract = await hre.ethers.getContract("YourContract", deployer);
 };
