@@ -1,5 +1,8 @@
+import { ChangeEvent, useState } from "react";
+import { Spinner } from "../Spinner";
 import { MultisigPageLayout } from "./MultisigPageLayout";
-import { Address } from "~~/components/scaffold-eth";
+import { useLocalStorage } from "usehooks-ts";
+import { Address, AddressInput, InputBase } from "~~/components/scaffold-eth";
 import { useScaffoldContractRead, useScaffoldEventHistory } from "~~/hooks/scaffold-eth";
 
 const CONTRACT_NAME = "MetaMultiSigWallet";
@@ -8,47 +11,140 @@ export const Owners = () => {
   return (
     <MultisigPageLayout>
       <OwnerCard />
+      <ModifyOwnersCard />
     </MultisigPageLayout>
   );
 };
 
 function OwnerCard() {
-  // TODO isLoading
-  const { data: signaturesRequired } = useScaffoldContractRead({
+  return (
+    <div className="flex flex-col w-full sm:max-w-xs gap-4 bg-base-200 opacity-90 p-5 rounded-2xl shadow-lg">
+      <OwnerCardContent />
+    </div>
+  );
+}
+
+function OwnerCardContent() {
+  const {
+    data: signaturesRequired,
+    isLoading: isLoadingSignaturesRequired,
+    error: errorSignaturesRequired,
+  } = useScaffoldContractRead({
     contractName: CONTRACT_NAME,
     functionName: "signaturesRequired",
   });
 
   const {
     data: events,
-    // isLoading: isLoadingEvents,
-    // error: errorReadingEvents,
+    isLoading: isLoadingEvents,
+    error: errorEvents,
   } = useScaffoldEventHistory({
     contractName: CONTRACT_NAME,
     eventName: "Owner",
-    // Specify the starting block number from which to read events.
     fromBlock: 1,
-    // blockData: true,
-    // Apply filters to the event based on parameter names and values { [parameterName]: value },
-    // filters: { premium: true }
-    // If set to true it will return the transaction data for each event (default: false),
-    // transactionData: true,
-    // If set to true it will return the receipt data for each event (default: false),
-    // receiptData: true
   });
 
-  console.log("events", events);
-  console.log("signaturesRequired", signaturesRequired);
+  if (isLoadingSignaturesRequired || isLoadingEvents || !signaturesRequired || !events) {
+    return (
+      <div className="flex justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (errorSignaturesRequired || errorEvents) {
+    console.error("Owner card error", errorSignaturesRequired || errorEvents);
+    return <div className="text-error">Error while retrieving owners.</div>;
+  }
 
   return (
-    <div className="flex flex-col w-full sm:max-w-xs gap-4 bg-base-200 opacity-90 p-5 rounded-2xl shadow-lg">
-      <span className="text-2xl">Signatures required: {signaturesRequired?.toNumber()}</span>
-      {events?.map(event => (
+    <>
+      <span className="text-2xl">Signatures required: {signaturesRequired.toNumber()}</span>
+      {events.map(event => (
         <div key={`owner_${event.args.owner}`} className="flex justify-between">
           <Address address={event.args.owner} />
           <div>{event.args.added ? "👍" : "👎"}</div>
         </div>
       ))}
+    </>
+  );
+}
+
+type MethodName = "addSigner" | "removeSigner";
+
+function ModifyOwnersCard() {
+  return (
+    <div className="flex flex-col w-full sm:max-w-lg gap-4 bg-base-100 rounded-2xl shadow-md  border border-base-300 p-5">
+      <ModifyOwnersCardContent />
     </div>
+  );
+}
+
+function ModifyOwnersCardContent() {
+  const [methodName, setMethodName] = useLocalStorage<MethodName | undefined>("multisig.owners.method", undefined);
+  const [address, setAddress] = useState<string>("");
+  const [signaturesRequired, setSignaturesRequired] = useState<number | undefined>(undefined);
+
+  const onMethodChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setMethodName((e.target.value as MethodName) || undefined);
+  };
+
+  const onSignaturesRequiredChange = (rawValue: string) => {
+    const value = rawValue.trim();
+    if (value) {
+      const number = parseInt(value);
+      if (!isNaN(number)) {
+        setSignaturesRequired(number);
+      }
+    } else {
+      setSignaturesRequired(undefined);
+    }
+  };
+  return (
+    <>
+      <select
+        value={methodName || ""}
+        onChange={onMethodChange}
+        className={`select select-bordered w-full max-w-xs border-2 border-base-300 bg-base-200${
+          !methodName ? " opacity-50" : ""
+        }`}
+      >
+        <option value="" disabled>
+          Pick a method to update owners
+        </option>
+        <option value="addSigner">addSigner()</option>
+        <option value="removeSigner">removeSigner()</option>
+      </select>
+      <AddressInput placeholder="owner address" value={address} onChange={setAddress} />
+      <InputBase
+        placeholder="new # of signatures required"
+        value={signaturesRequired !== undefined ? String(signaturesRequired) : ""}
+        onChange={onSignaturesRequiredChange}
+      />
+
+      <div className="flex justify-end gap-2">
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={() => {
+            setMethodName(undefined);
+            setAddress("");
+            setSignaturesRequired(undefined);
+          }}
+        >
+          Clear
+        </button>
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={() => {
+            // TODO
+            setMethodName(undefined);
+            setAddress("");
+            setSignaturesRequired(undefined);
+          }}
+        >
+          Submit tx
+        </button>
+      </div>
+    </>
   );
 }
