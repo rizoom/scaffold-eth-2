@@ -1,6 +1,4 @@
-import { CopyIcon } from "./assets/CopyIcon";
-import { DiamondIcon } from "./assets/DiamondIcon";
-import { HareIcon } from "./assets/HareIcon";
+import { MultisigPageLayout } from "./MultisigPageLayout";
 import { QRCodeSVG } from "qrcode.react";
 import { Spinner } from "~~/components/Spinner";
 import { Address, Balance } from "~~/components/scaffold-eth";
@@ -9,26 +7,18 @@ import { getTargetNetwork } from "~~/utils/scaffold-eth";
 
 const CONTRACT_NAME = "MetaMultiSigWallet";
 
-export const Multisig = () => {
-  return (
-    <div className="relative flex flex-col grow items-center bg-base-300 gap-8 p-10">
-      <DiamondIcon className="absolute left-0 top-24" />
-      <CopyIcon className="absolute bottom-0 left-36" />
-      <HareIcon className="absolute right-0 bottom-24" />
-
-      <MultisigContractCard />
-      <TransactionsTable />
-    </div>
-  );
-};
+export const Multisig = () => (
+  <MultisigPageLayout>
+    <MultisigContractCard />
+    <TransactionsTable />
+  </MultisigPageLayout>
+);
 
 function MultisigContractCard() {
   return (
-    <div className="flex gap-2 w-full max-w-xs">
-      <div className="flex flex-col grow gap-4 bg-base-200 opacity-90 p-5 rounded-2xl shadow-lg">
-        <span className="text-2xl text-black">{CONTRACT_NAME}</span>
-        <MultisigContractCardContent />
-      </div>
+    <div className="flex flex-col w-full sm:max-w-xs gap-4 bg-base-200 opacity-90 p-5 rounded-2xl shadow-lg">
+      <span className="text-2xl">{CONTRACT_NAME}</span>
+      <MultisigContractCardContent />
     </div>
   );
 }
