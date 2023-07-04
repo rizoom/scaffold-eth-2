@@ -2,7 +2,15 @@ import React, { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Bars3Icon, BugAntIcon, MagnifyingGlassIcon, SparklesIcon, WalletIcon } from "@heroicons/react/24/outline";
+import {
+  Bars3Icon,
+  BugAntIcon,
+  MagnifyingGlassIcon,
+  SparklesIcon,
+  SquaresPlusIcon,
+  UserGroupIcon,
+  WalletIcon,
+} from "@heroicons/react/24/outline";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 
@@ -44,8 +52,14 @@ export const Header = () => {
       </li>
       <li>
         <NavLink href="/multisig/owners">
-          <WalletIcon className="h-4 w-4" />
+          <UserGroupIcon className="h-4 w-4" />
           Owners
+        </NavLink>
+      </li>
+      <li>
+        <NavLink href="/multisig/create">
+          <SquaresPlusIcon className="h-4 w-4" />
+          Create Tx
         </NavLink>
       </li>
       <li>

@@ -1,9 +1,10 @@
 import { ChangeEvent, useState } from "react";
-import { Spinner } from "../Spinner";
+import { useRouter } from "next/router";
 import { MultisigPageLayout } from "./MultisigPageLayout";
 import { useLocalStorage } from "usehooks-ts";
+import { Spinner } from "~~/components/Spinner";
 import { Address, AddressInput, InputBase } from "~~/components/scaffold-eth";
-import { useScaffoldContractRead, useScaffoldEventHistory } from "~~/hooks/scaffold-eth";
+import { useScaffoldContract, useScaffoldContractRead, useScaffoldEventHistory } from "~~/hooks/scaffold-eth";
 
 const CONTRACT_NAME = "MetaMultiSigWallet";
 
@@ -81,9 +82,27 @@ function ModifyOwnersCard() {
 }
 
 function ModifyOwnersCardContent() {
-  const [methodName, setMethodName] = useLocalStorage<MethodName | undefined>("multisig.owners.method", undefined);
+  const router = useRouter();
+
+  const [methodName, setMethodName] = useState<MethodName | undefined>(undefined);
   const [address, setAddress] = useState<string>("");
   const [signaturesRequired, setSignaturesRequired] = useState<number | undefined>(undefined);
+
+  const [, setEncodedData] = useLocalStorage<string | undefined>("multisig.owners.encodedData", undefined);
+
+  const { data: multisigContract, isLoading } = useScaffoldContract({ contractName: CONTRACT_NAME });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (!multisigContract) {
+    return <div className="text-error">{`No contract found by the name of "${CONTRACT_NAME}"!`}</div>;
+  }
 
   const onMethodChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setMethodName((e.target.value as MethodName) || undefined);
@@ -100,6 +119,7 @@ function ModifyOwnersCardContent() {
       setSignaturesRequired(undefined);
     }
   };
+
   return (
     <>
       <select
@@ -135,11 +155,19 @@ function ModifyOwnersCardContent() {
         </button>
         <button
           className="btn btn-primary btn-sm"
+          disabled={!methodName || !address || !signaturesRequired}
           onClick={() => {
-            // TODO
+            const encodedData = multisigContract.interface.encodeFunctionData(methodName!, [
+              address,
+              signaturesRequired,
+            ]);
+            setEncodedData(encodedData);
+
             setMethodName(undefined);
             setAddress("");
             setSignaturesRequired(undefined);
+
+            router.push("/multisig/create");
           }}
         >
           Submit tx
